@@ -1,11 +1,11 @@
 
 /* 
-	The program has been written by Elad Nachmias
-	
-	Based on schematics ideas by reuk.co.uk November 2013
-	For information and the schematic circuit diagram for this
-	solar water heating pump controller design, visit:
-	http://www.reuk.co.uk/wordpress/arduino-solar-water-heating-pump-controller-design-and-code/
+    The program has been written by Elad Nachmias
+    
+    Based on schematics ideas by reuk.co.uk November 2013
+    For information and the schematic circuit diagram for this
+    solar water heating pump controller design, visit:
+    http://www.reuk.co.uk/wordpress/arduino-solar-water-heating-pump-controller-design-and-code/
 */
 
 #include <Wire.h>
@@ -31,12 +31,12 @@ const int PUMP_RELAY_PIN = 10;
 
 
 /*
-	Class for maintaining stable readings from a potentially unstable sensor.
-	It saves the last `SENSOR_ARRAY_SIZE` readings from the sensor.
-	Reading the current value by `getStableAvg()` returns an average of the last
-	readings, while ignoring some outliers.
-	Don't forget to make at lease `SENSOR_ARRAY_SIZE` samples before getting
-	any value.
+    Class for maintaining stable readings from a potentially unstable sensor.
+    It saves the last `SENSOR_ARRAY_SIZE` readings from the sensor.
+    Reading the current value by `getStableAvg()` returns an average of the last
+    readings, while ignoring some outliers.
+    Don't forget to make at lease `SENSOR_ARRAY_SIZE` samples before getting
+    any value.
 */
 #define SENSOR_ARRAY_SIZE 10
 #define SENSOR_ARRAY_NR_OUTLIERS 3
@@ -51,7 +51,7 @@ private:
 public:
 
   SensorSampler()
-	: next_reading_idx(0), sum(0), avg(0), stableAvg(0) {
+    : next_reading_idx(0), sum(0), avg(0), stableAvg(0) {
     for (int i = 0; i < SENSOR_ARRAY_SIZE; ++i) readings[i] = 0;
   }
 
@@ -65,10 +65,10 @@ public:
     // cyclic increment of index to next position in readings array.
     this->next_reading_idx++;
     if (this->next_reading_idx >= SENSOR_ARRAY_SIZE) this->next_reading_idx = 0;
-	
-	// we always keep the stable-avg up-to-date, so it won't have to be
-	// re-calculated each time `getStableAvg()` is called.
-	this->updateStableAvg();
+    
+    // we always keep the stable-avg up-to-date, so it won't have to be
+    // re-calculated each time `getStableAvg()` is called.
+    this->updateStableAvg();
   }
 
   inline float getAvg() {
@@ -76,7 +76,7 @@ public:
   }
 
   inline float getStableAvg() {
-	  return this->stableAvg;
+    return this->stableAvg;
   }
 
 private:
@@ -95,8 +95,8 @@ private:
   void findOutliers(int* outliersIndexes, int nr_outliers) {
     assert(nr_outliers < SENSOR_ARRAY_SIZE);
 
-	// We use a static array, so it won't be allocated on the stack each time
-	// the function is called. Assuming the calls to this function are not concurrent.
+    // We use a static array, so it won't be allocated on the stack each time
+    // the function is called. Assuming the calls to this function are not concurrent.
     static float dist_from_avg[SENSOR_ARRAY_SIZE];
     this->calcReadingsDistFromAvg(dist_from_avg);
 
@@ -140,24 +140,30 @@ private:
 };
 
 #define MAX_NR_OF_SAMPLES_BETWEEN_TWO_ERRONEOUS_TO_REPORT_FREQ_ERROR (SENSOR_ARRAY_SIZE)
-#define MIN_NR_OF_VALID_SAMPLES_TO_ABORT_FREQ_ERROR (2.5 * SENSOR_ARRAY_SIZE)
+#define MIN_NR_OF_VALID_SAMPLES_TO_ABORT_FREQ_ERROR (3 * SENSOR_ARRAY_SIZE)
 #define VALID_TEMP_LOWER (-5)
-#define VALID_TEMP_UPPER (120)
-#define VALID_TEMP_MAX_ABS_DIFF (7)
+#define VALID_TEMP_UPPER (140)
+#define VALID_TEMP_MAX_ABS_DIFF (9)
 enum SensorErrorState { NO_ERROR, ERROR_NOT_FREQ, ERROR_FREQ };
 class Thermistor10KSampler : SensorSampler {
 private:
   const int thermistorPin;
   unsigned int nr_samples;
   struct {
-	enum SensorErrorState errorState;
-	unsigned int lastErroneousSampleNum;
+    enum SensorErrorState errorState;
+    unsigned int lastErroneousSampleNum;
   } sensorError;
-	
+    
 public:
 
   Thermistor10KSampler(int thermistorPin)
-	: SensorSampler(), thermistorPin(thermistorPin), nr_samples(0), sensorError({ .errorState = SensorErrorState::NO_ERROR, .lastErroneousSampleNum = 0 })
+  : SensorSampler(), 
+    thermistorPin(thermistorPin), 
+    nr_samples(0), 
+    sensorError({ 
+      .errorState = SensorErrorState::NO_ERROR, 
+      .lastErroneousSampleNum = 0 
+    })
   {}
 
   void init() {
@@ -167,26 +173,26 @@ public:
   void sample() {
     static const float R1 = 10000;
     static const float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07;
-	
+    
     int Vo;
-	float logR2, R2, celsiusTemp;
+    float logR2, R2, celsiusTemp;
     
     Vo = analogRead(this->thermistorPin);
-	
+    
     R2 = R1 * (1023.0 / (float)Vo - 1.0);
     logR2 = log(R2);
     celsiusTemp = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2)) - 273.15;
     
-	this->writeSample(celsiusTemp);
-	
-	// increment the number of samples. will set back to zero after max-int.
-	this->nr_samples++;
-	
-	if (isValidTemperature(celsiusTemp)) {
+    // increment the number of samples. will set back to zero after max-int.
+    this->nr_samples++;
+    
+    if (isValidTemperature(celsiusTemp)) {
       this->markCurrentSampleValid();
-	} else {
+    } else {
       this->markCurrentSampleErroneous();
-	}
+    }
+    
+    this->writeSample(celsiusTemp);
   }
   
   inline float getTemperature() {
@@ -201,28 +207,28 @@ private:
   
   inline bool isValidTemperature(float temperature) {
     return (temperature >= VALID_TEMP_LOWER
-        && temperature >= VALID_TEMP_UPPER
+        && temperature <= VALID_TEMP_UPPER
         && abs(this->getStableAvg() - temperature) <= VALID_TEMP_MAX_ABS_DIFF);
   }
   
   inline void markCurrentSampleErroneous() {
     if (this->sensorError.errorState == SensorErrorState::NO_ERROR) {
-	  this->sensorError.errorState = SensorErrorState::ERROR_NOT_FREQ;
-	} else if (this->sensorError.errorState == SensorErrorState::ERROR_NOT_FREQ
+      this->sensorError.errorState = SensorErrorState::ERROR_NOT_FREQ;
+    } else if (this->sensorError.errorState == SensorErrorState::ERROR_NOT_FREQ
       && (this->nr_samples - this->sensorError.lastErroneousSampleNum) <= MAX_NR_OF_SAMPLES_BETWEEN_TWO_ERRONEOUS_TO_REPORT_FREQ_ERROR) {
-	  this->sensorError.errorState = SensorErrorState::ERROR_FREQ;
-	}
-	// Notice: If the state already was `ERROR_FREQ`, the state stays as it has been before without any additional conditions.
-	
-	this->sensorError.lastErroneousSampleNum = this->nr_samples;
+      this->sensorError.errorState = SensorErrorState::ERROR_FREQ;
+    }
+    // Notice: If the state already was `ERROR_FREQ`, the state stays as it has been before without any additional conditions.
+    
+    this->sensorError.lastErroneousSampleNum = this->nr_samples;
   }
   
   inline void markCurrentSampleValid() {
-	  if (this->sensorError.errorState == SensorErrorState::ERROR_FREQ
-		&& (this->nr_samples - this->sensorError.lastErroneousSampleNum) > MIN_NR_OF_VALID_SAMPLES_TO_ABORT_FREQ_ERROR) {
-		  this->sensorError.errorState = SensorErrorState::ERROR_NOT_FREQ;
-	  }
-	  if (this->sensorError.errorState == SensorErrorState::ERROR_NOT_FREQ
+      if (this->sensorError.errorState == SensorErrorState::ERROR_FREQ
+        && (this->nr_samples - this->sensorError.lastErroneousSampleNum) > MIN_NR_OF_VALID_SAMPLES_TO_ABORT_FREQ_ERROR) {
+          this->sensorError.errorState = SensorErrorState::ERROR_NOT_FREQ;
+      }
+      if (this->sensorError.errorState == SensorErrorState::ERROR_NOT_FREQ
         && (this->nr_samples - this->sensorError.lastErroneousSampleNum) > MAX_NR_OF_SAMPLES_BETWEEN_TWO_ERRONEOUS_TO_REPORT_FREQ_ERROR) {
           this->sensorError.errorState = SensorErrorState::NO_ERROR;
       }
@@ -242,11 +248,11 @@ public:
   }
   inline void turnOn() {
     this->isPumpON = true;
-	RELAY_ON(this->pumpRelayPin);
+    RELAY_ON(this->pumpRelayPin);
   }
   inline void turnOff() {
     this->isPumpON = false;
-	RELAY_OFF(this->pumpRelayPin);
+    RELAY_OFF(this->pumpRelayPin);
   }
   inline bool isOn() {
     return this->isPumpON;
@@ -266,16 +272,16 @@ private:
 
 public:
   SolarSystem(int panelSensorPin, int tankSensorPin, int pumpRelayPin)
-	: solarPanelSampler(panelSensorPin),
-	hotWaterTankSampler(tankSensorPin),
-	pump(pumpRelayPin)
-	{}
+    : solarPanelSampler(panelSensorPin),
+    hotWaterTankSampler(tankSensorPin),
+    pump(pumpRelayPin)
+    {}
   
   void init() {
     pump.init();
-	solarPanelSampler.init();
-	hotWaterTankSampler.init();
-	// fill the sensors data with initial values.
+    solarPanelSampler.init();
+    hotWaterTankSampler.init();
+    // fill the sensors data with initial values.
     for (int i = 0; i < SENSOR_ARRAY_SIZE; ++i) {
       solarPanelSampler.sample();
       hotWaterTankSampler.sample();
@@ -313,14 +319,14 @@ public:
   void printStatusToLCD(LCD_TYPE& lcd) {
     // first line.
     lcd.setCursor(0,0);
-	if (this->solarPanelSampler.isErrorOccurred()) print("*"); else print(" "); // error indicator
+    if (this->solarPanelSampler.isErrorOccurred()) lcd.print("*"); else lcd.print(" "); // error indicator
     lcd.print("Panel ");
     lcd.print(this->solarPanelSampler.getTemperature(), 1); // 4-5 chars
     lcd.print(" ");
-	
-	// second line.
+    
+    // second line.
     lcd.setCursor(0,1);
-	if (this->hotWaterTankSampler.isErrorOccurred()) print("*"); else print(" "); // error indicator
+    if (this->hotWaterTankSampler.isErrorOccurred()) lcd.print("*"); else lcd.print(" "); // error indicator
     lcd.print("Tank  ");
     lcd.print(this->hotWaterTankSampler.getTemperature(), 1); // 4-5 chars
     lcd.print(" ");
@@ -340,8 +346,8 @@ public:
     Serial.print(solarPanelSampler.getTemperature());
     Serial.print("   Tank Temp: ");
     Serial.print(hotWaterTankSampler.getTemperature());
-	Serial.print("   Pump: ");
-	if (this->pump.isOn()) {
+    Serial.print("   Pump: ");
+    if (this->pump.isOn()) {
       Serial.println("ON");
     } else {
       Serial.println("OFF");
@@ -355,9 +361,9 @@ SolarSystem solarSystem(PANELSENSOR_PIN, TANKSENSOR_PIN, PUMP_RELAY_PIN);
 
 /* Main Arduino setup() method */
 void setup() {
-#if DEBUG_PRINT_TEMP_TO_SERIAL
+  #if DEBUG_PRINT_TEMP_TO_SERIAL
   Serial.begin(9600);
-#endif /* DEBUG_PRINT_TEMP_TO_SERIAL */
+  #endif /* DEBUG_PRINT_TEMP_TO_SERIAL */
   
   lcd.init();  //initialize the LCD
   lcd.backlight();  //open the back-light
@@ -368,10 +374,10 @@ void setup() {
 /* Main Arduino loop() method */
 void loop() {
   solarSystem.updateStatus();
-
+  
   solarSystem.printStatusToLCD(lcd);
   #if DEBUG_PRINT_TEMP_TO_SERIAL
-    solarSystem.printStatusToSerial();
+  solarSystem.printStatusToSerial();
   #endif /* DEBUG_PRINT_TEMP_TO_SERIAL */
   
   delay(DELAY_MS_BETWEEN_SAMPLING);
