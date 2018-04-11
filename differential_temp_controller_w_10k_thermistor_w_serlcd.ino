@@ -177,11 +177,12 @@ public:
     logR2 = log(R2);
     celsiusTemp = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2)) - 273.15;
     
+	this->writeSample(celsiusTemp);
+	
 	// increment the number of samples. will set back to zero after max-int.
 	this->nr_samples++;
 	
 	if (isValidTemperature(celsiusTemp)) {
-      this->writeSample(celsiusTemp);
       this->markCurrentSampleValid();
 	} else {
       this->markCurrentSampleErroneous();
@@ -310,24 +311,27 @@ public:
   // to support any kind of lcd that has `setCursor` and `print` methods.
   template <typename LCD_TYPE>
   void printStatusToLCD(LCD_TYPE& lcd) {
+    // first line.
     lcd.setCursor(0,0);
+	if (this->solarPanelSampler.isErrorOccurred()) print("*"); else print(" "); // error indicator
     lcd.print("Panel ");
     lcd.print(this->solarPanelSampler.getTemperature(), 1); // 4-5 chars
-    lcd.print("  ");
+    lcd.print(" ");
+	
+	// second line.
     lcd.setCursor(0,1);
+	if (this->hotWaterTankSampler.isErrorOccurred()) print("*"); else print(" "); // error indicator
     lcd.print("Tank  ");
     lcd.print(this->hotWaterTankSampler.getTemperature(), 1); // 4-5 chars
-    lcd.print("  ");
+    lcd.print(" ");
     
-    // print whether the pump is currently turned-on.
+    // print whether the pump is currently turned-on, on the top-right corner.
     lcd.setCursor(13,0);
     if (this->pump.isOn()) {
       lcd.print("ON");
     } else {
       lcd.print("  ");
     }
-    
-    // TODO: print `*` if (solarPanelSampler.isErrorOccurred() || hotWaterTankSampler.isErrorOccurred())
   }
 
 #if DEBUG_PRINT_TEMP_TO_SERIAL
