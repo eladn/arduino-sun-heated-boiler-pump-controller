@@ -158,4 +158,32 @@ private:
 	
 };
 
+/*
+
+// Example: This is a mode for testing.
+
+class Mode1 : public UIScreenModeInterface<int> {
+public:
+	Mode1(UIHandler *uiHandler) : UIScreenModeInterface(uiHandler) {}
+	virtual void __init() override {
+		typedef typename EventsHandler<Mode1, int>::ProxyType ProxyType;
+		ProxyType proxy = ProxyType(this, &Mode1::m1);
+		this->registerHandler<Mode1>(1, proxy, 1);
+	}
+	void m1(unsigned int events, int t) {
+		std::cout << "triggered: " << events << " " << t << std::endl;
+	}
+};
+
+UIHandler uiHandler = UIHandler(0);
+Mode1 mode1 = Mode1(&uiHandler);
+
+void init() {
+	uiHandler.setButton(1,1);
+	mode1.init();
+	mode1.buttonEventsOccurred(1,1);
+}
+
+*/
+
 #endif /* UI_SCREEN_MODE_INTERFACE_H_ */
