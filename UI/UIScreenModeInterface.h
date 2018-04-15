@@ -11,23 +11,23 @@ public:
 	UIScreenModeInterfaceBase() {}
 	virtual ~UIScreenModeInterfaceBase() {}
 	virtual void buttonEventsOccurred(unsigned int events, ButtonIdx buttonIdx) = 0;
-	// getNext();
+	UIScreenModeInterfaceBase* getNext() {
+		// TODO: implement!
+		return NULL;
+	}
 };
 
 template <typename ButtonEventsArgType>
 class UIScreenModeInterface : public UIScreenModeInterfaceBase {
 public:
 	typedef UIHandler::ButtonIdx ButtonIdx;
-	
-	// TODO: doc here!
-	class DummyCalleeClass {};
-	typedef EventsHandler<DummyCalleeClass, ButtonEventsArgType> ButtonEventsHandlerDummyType;
+	typedef EventsHandler<ButtonEventsArgType> ButtonEventsHandlerType;
 	
 private:
 	UIHandler* uiHandler;
 	struct BottonDetails {
 		ButtonIdx buttonIdx;
-		char eventsHandlerBuffer[sizeof(ButtonEventsHandlerDummyType)]; // TODO: doc here!
+		ButtonEventsHandlerType eventsHandler;
 	} buttons[UI_MAX_BUTTONS];
 	
 public:
@@ -39,16 +39,7 @@ public:
 		}
 	}
 	
-	virtual ~UIScreenModeInterface() {
-		EventsHandlerBase<ButtonEventsArgType> *eventsHandler;
-		
-		// TODO: doc here!
-		for (int i = 0; i < UI_MAX_BUTTONS; ++i) {
-			if (this->buttons[i].buttonIdx < 0) continue;
-			eventsHandler = (EventsHandlerBase<ButtonEventsArgType> *)(&this->buttons[i].eventsHandlerBuffer);
-			eventsHandler->~EventsHandlerBase();
-		}
-	}
+	virtual ~UIScreenModeInterface() {}
 	
 private:
 	
@@ -67,8 +58,7 @@ public:
 		BottonDetails* buttonDetails = this->findBottonDetailsByIdx(buttonIdx);
 		if (!buttonDetails) return;
 		
-		EventsHandlerBase<ButtonEventsArgType> *eventsHandler = (EventsHandlerBase<ButtonEventsArgType> *)(&buttonDetails->eventsHandlerBuffer);
-		eventsHandler->triggerEvents(events);
+		buttonDetails->eventsHandler.triggerEvents(events);
 	}
 
 	inline void init() {
@@ -91,9 +81,9 @@ public:
 		this->__swichedOut();
 	}
 	
-	template <class InheritorClass>
+	template <class CalleeClass>
 	int registerHandler(ButtonIdx buttonIdx,
-						const typename EventsHandler<InheritorClass, ButtonEventsArgType>::ProxyType& proxy, 
+						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy, 
 						const ButtonEventsArgType& arg, 
 						unsigned int eventsMask = UI_BUTTON_EVENTS_FULL_MASK) {
 		BottonDetails* buttonDetails = this->findBottonDetailsByIdx(buttonIdx);
@@ -103,41 +93,39 @@ public:
 			buttonDetails->buttonIdx = buttonIdx;
 		}
 		
-		typedef EventsHandler<InheritorClass, ButtonEventsArgType> EventsHandlerType;
-		EventsHandlerType *eventsHandler = new(&buttonDetails->eventsHandlerBuffer) EventsHandlerType();
-		assert(eventsHandler);
+		buttonDetails->eventsHandler = ButtonEventsHandlerType();
 		
-		return eventsHandler->registerHandler(proxy, arg, eventsMask);
+		return buttonDetails->eventsHandler.registerHandler<CalleeClass>(proxy, arg, eventsMask);
 	}
-	template <class InheritorClass>
+	template <class CalleeClass>
 	inline int onClick(ButtonIdx buttonIdx,
-						const typename EventsHandler<InheritorClass, ButtonEventsArgType>::ProxyType& proxy, 
+						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy, 
 						const ButtonEventsArgType& arg) {
-		return this->registerHandler(buttonIdx, proxy, arg, UIButtonEventType::Button_OnClick);
+		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnClick);
 	}
-	template <class InheritorClass>
+	template <class CalleeClass>
 	inline int onDoubleClick(ButtonIdx buttonIdx, 
-								const typename EventsHandler<InheritorClass, ButtonEventsArgType>::ProxyType& proxy,
-								const ButtonEventsArgType& arg) {
-		return this->registerHandler(buttonIdx, proxy, arg, UIButtonEventType::Button_OnDoubleClick);
-	}
-	template <class InheritorClass>
-	inline int onLongPress(ButtonIdx buttonIdx, 
-							const typename EventsHandler<InheritorClass, ButtonEventsArgType>::ProxyType& proxy,
-							const ButtonEventsArgType& arg) {
-		return this->registerHandler(buttonIdx, proxy, arg, UIButtonEventType::Button_OnLongPress);
-	}
-	template <class InheritorClass>
-	inline int onDown(ButtonIdx buttonIdx, 
-						const typename EventsHandler<InheritorClass, ButtonEventsArgType>::ProxyType& proxy,
+						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy,
 						const ButtonEventsArgType& arg) {
-		return this->registerHandler(buttonIdx, proxy, arg, UIButtonEventType::Button_OnDown);
+		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnDoubleClick);
 	}
-	template <class InheritorClass>
+	template <class CalleeClass>
+	inline int onLongPress(ButtonIdx buttonIdx, 
+						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy,
+						const ButtonEventsArgType& arg) {
+		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnLongPress);
+	}
+	template <class CalleeClass>
+	inline int onDown(ButtonIdx buttonIdx, 
+						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy,
+						const ButtonEventsArgType& arg) {
+		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnDown);
+	}
+	template <class CalleeClass>
 	inline int onUp(ButtonIdx buttonIdx, 
-					const typename EventsHandler<InheritorClass, ButtonEventsArgType>::ProxyType& proxy,
-					const ButtonEventsArgType& arg) {
-		return this->registerHandler(buttonIdx, proxy, arg, UIButtonEventType::Button_OnUp);
+						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy,
+						const ButtonEventsArgType& arg) {
+		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnUp);
 	}
 	
 private:
@@ -166,7 +154,7 @@ class Mode1 : public UIScreenModeInterface<int> {
 public:
 	Mode1(UIHandler *uiHandler) : UIScreenModeInterface(uiHandler) {}
 	virtual void __init() override {
-		typedef typename EventsHandler<Mode1, int>::ProxyType ProxyType;
+		typedef ObjectMethodProxy<Mode1, void, unsigned int, int> ProxyType;
 		ProxyType proxy = ProxyType(this, &Mode1::m1);
 		this->registerHandler<Mode1>(1, proxy, 1);
 	}

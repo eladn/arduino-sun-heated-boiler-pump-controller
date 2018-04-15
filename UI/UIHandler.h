@@ -10,10 +10,10 @@
 class UIHandler {
 public:
 	typedef int ButtonIdx;
-	typedef UIButton<UIHandler, ButtonIdx, 1> ButtonType;
-	typedef ButtonType::ProxyType ButtonProxyType;
-	typedef UIButton<UIHandler, void*, 1> ModeButtonType;
-	typedef ModeButtonType::ProxyType ModeButtonProxyType;
+	typedef UIButton<ButtonIdx, 1> ButtonType;
+	typedef ObjectMethodProxy<UIHandler, void, unsigned int, ButtonIdx> ButtonProxyType;
+	typedef UIButton<void*, 1> ModeButtonType;
+	typedef ObjectMethodProxy<UIHandler, void, unsigned int, void*> ModeButtonProxyType;
 	
 private:
 	ModeButtonType modeButton;

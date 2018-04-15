@@ -14,11 +14,10 @@ enum UIButtonEventType {
 
 #define UI_BUTTON_EVENTS_FULL_MASK (UIButtonEventType::Button_OnClick || UIButtonEventType::Button_OnDoubleClick || UIButtonEventType::Button_OnLongPress || UIButtonEventType::Button_OnDown || UIButtonEventType::Button_OnUp)
 
-template <class CalleeClass, typename ArgType, size_t MaxEventHandlers = DEFAULT_MAX_EVENT_HANDLERS>
+template <typename ArgType, size_t MaxEventHandlers = DEFAULT_MAX_EVENT_HANDLERS>
 class UIButton {
 public:
-	typedef EventsHandler<CalleeClass, ArgType, MaxEventHandlers> EventsHandlerType;
-	typedef typename EventsHandlerType::ProxyType ProxyType;
+	typedef EventsHandler<ArgType, MaxEventHandlers> EventsHandlerType;
 	
 private:
 	int pinNumber;
@@ -30,23 +29,47 @@ public:
 		eventsHandler()
 	{}
 	
-	inline int registerHandler(const ProxyType& proxy, const ArgType& arg, unsigned int eventsMask = UI_BUTTON_EVENTS_FULL_MASK) {
-		return this->eventsHandler.registerHandler(proxy, arg, eventsMask);
+	template <class CalleeClass>
+	inline int registerHandler(
+				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ArgType& arg, 
+				unsigned int eventsMask = UI_BUTTON_EVENTS_FULL_MASK) {
+		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, eventsMask);
 	}
-	inline int onClick(const ProxyType& proxy, const ArgType& arg) {
-		return this->eventsHandler.registerHandler(proxy, arg, UIButtonEventType::Button_OnClick);
+	
+	template <class CalleeClass>
+	inline int onClick(
+				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ArgType& arg) {
+		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, UIButtonEventType::Button_OnClick);
 	}
-	inline int onDoubleClick(const ProxyType& proxy, const ArgType& arg) {
-		return this->eventsHandler.registerHandler(proxy, arg, UIButtonEventType::Button_OnDoubleClick);
+	
+	template <class CalleeClass>
+	inline int onDoubleClick(
+				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ArgType& arg) {
+		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, UIButtonEventType::Button_OnDoubleClick);
 	}
-	inline int onLongPress(const ProxyType& proxy, const ArgType& arg) {
-		return this->eventsHandler.registerHandler(proxy, arg, UIButtonEventType::Button_OnLongPress);
+	
+	template <class CalleeClass>
+	inline int onLongPress(
+				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ArgType& arg) {
+		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, UIButtonEventType::Button_OnLongPress);
 	}
-	inline int onDown(const ProxyType& proxy, const ArgType& arg) {
-		return this->eventsHandler.registerHandler(proxy, arg, UIButtonEventType::Button_OnDown);
+	
+	template <class CalleeClass>
+	inline int onDown(
+				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ArgType& arg) {
+		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, UIButtonEventType::Button_OnDown);
 	}
-	inline int onUp(const ProxyType& proxy, const ArgType& arg) {
-		return this->eventsHandler.registerHandler(proxy, arg, UIButtonEventType::Button_OnUp);
+	
+	template <class CalleeClass>
+	inline int onUp(
+				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ArgType& arg) {
+		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, UIButtonEventType::Button_OnUp);
 	}
 	
 	void init() {
