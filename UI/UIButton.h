@@ -1,8 +1,8 @@
 #ifndef UI_BUTTON_H_
 #define UI_BUTTON_H_
 
-#include "../ObjectMethodProxy.h"
-#include "../EventsHandler.h"
+#include "../utils/ObjectMethodProxy.h"
+#include "../utils/EventsHandler.h"
 
 enum UIButtonEventType {
 	Button_OnClick =        (1<<0),
