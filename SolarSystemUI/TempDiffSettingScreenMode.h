@@ -4,13 +4,13 @@
 #include "../UI/UIScreenModeInterface.h"
 #include "../SolarSystem/SolarSystem.h"
 
-class TempDiffSettingScreenMode : public UIScreenModeInterface<void*> /* TODO: define <ButtonEventsArgType> template */ {
+class TempDiffSettingScreenMode : public UIScreenModeInterface<3, 1> /* TODO: define <ButtonEventsArgType> template */ {
 private:
-	SolarSystem* solarSystem;
+	SolarSystem* solarSystem;  // Notice: We can extern it assuming there is only one.
 	
 public:
 	TempDiffSettingScreenMode(SolarSystem* solarSystem)
-		: UIScreenModeInterface(),
+		: UIScreenModeInterface<3, 1>(),
 		solarSystem(solarSystem)
 	{}
 	

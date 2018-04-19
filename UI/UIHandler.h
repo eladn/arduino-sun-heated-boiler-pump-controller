@@ -1,7 +1,8 @@
 #ifndef UI_HANDLER_H_
 #define UI_HANDLER_H_
 
-#define UI_MAX_BUTTONS 8
+// TODO: make it a template size_t variable for UIHandler.
+#define UI_MAX_BUTTONS 3
 
 #include "UIButton.h"
 #include "UIScreenModeInterface.h"
@@ -10,21 +11,20 @@
 class UIHandler {
 public:
 	typedef int ButtonIdx;
-	typedef UIButton<ButtonIdx, 1> ButtonType;
+	typedef UIButtonWithArg<ButtonIdx, 1> ButtonType;
 	typedef ObjectMethodProxy<UIHandler, void, UIButtonEvent, ButtonIdx> ButtonProxyType;
-	typedef UIButton<void*, 1> ModeButtonType;
-	typedef ObjectMethodProxy<UIHandler, void, UIButtonEvent, void*> ModeButtonProxyType;
+	typedef UIButton<1> ModeButtonType;
+	typedef ObjectMethodProxy<UIHandler, void, UIButtonEvent> ModeButtonProxyType;
 	
 private:
 	UILcdInterface *lcdInterface;
 	ModeButtonType modeButton;
 	
-	// TODO: array of buttons!
 	struct ButtonDetails {
 		ButtonType button;
-		ButtonIdx buttonIdx;
+		/*ButtonIdx buttonIdx;*/
 		
-		ButtonDetails() : button(0), buttonIdx() {}
+		ButtonDetails() : button(0) /*, buttonIdx()*/ {}
 	} buttons[UI_MAX_BUTTONS];
 	int nrButtons;
 	
@@ -38,7 +38,7 @@ public:
 		buttons(),
 		nrButtons(0)
 	{
-		this->modeButton.onClick(ModeButtonProxyType(this, &UIHandler::switchToNextMode), NULL);
+		this->modeButton.onClick(ModeButtonProxyType(this, &UIHandler::switchToNextMode));
 	}
 	
 	void addScreenMode(UIScreenModeInterfaceBase *screenMode) {
@@ -49,11 +49,11 @@ public:
 	void setButton(int buttonPin, ButtonIdx buttonIdx) {
 		this->buttons[this->nrButtons].button = ButtonType(buttonPin);
 		this->buttons[this->nrButtons].button.registerHandler(ButtonProxyType(this, &UIHandler::buttonEventsOccurred), buttonIdx);
-		this->buttons[this->nrButtons].buttonIdx = buttonIdx;
+		/*this->buttons[this->nrButtons].buttonIdx = buttonIdx;*/
 		this->nrButtons++;
 	}
 	
-	void switchToNextMode(UIButtonEvent, void*) {
+	void switchToNextMode(UIButtonEvent) {
 		assert(curScreenMode != NULL);
 		
 		// TODO: implement!
