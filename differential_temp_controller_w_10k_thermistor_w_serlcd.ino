@@ -23,10 +23,13 @@ const int PUMP_RELAY_PIN = 10;
 /* whether to constantly print temperatures to serial (for debugging) */
 #define DEBUG_PRINT_TEMP_TO_SERIAL 0
 
-#include "SolarSystem.h"
+#include "SolarSystem/SolarSystem.h"
+#include "SolarSystemUI/SolarSystemUI.h"
 
 
 SolarSystem solarSystem(PANELSENSOR_PIN, TANKSENSOR_PIN, PUMP_RELAY_PIN);
+UILcdInterfaceImpl<LiquidCrystal_I2C> lcdInterface(&lcd);
+SolarSystemUI solarSystemUI(&solarSystem, &lcdInterface);
 
 
 /* Main Arduino setup() method */
@@ -39,12 +42,15 @@ void setup() {
   lcd.backlight();  // open the back-light
   
   solarSystem.init();
+  solarSystemUI.init();
 }
 
 /* Main Arduino loop() method */
 void loop() {
   solarSystem.loop();
+  solarSystemUI.loop();
   
+  // TODO: remove lcd print! should be part of the `solarSystemUI`.
   solarSystem.printStatusToLCD(lcd);
   #if DEBUG_PRINT_TEMP_TO_SERIAL
   solarSystem.printStatusToSerial();
