@@ -1,38 +1,43 @@
 #ifndef UI_SCREEN_MODE_INTERFACE_H_
 #define UI_SCREEN_MODE_INTERFACE_H_
 
+#include "UILcdInterface.h"
 
 // TODO: implement!
 
+class UIHandler;
+
 class UIScreenModeInterfaceBase {
 public:
-	typedef UIHandler::ButtonIdx ButtonIdx;
+	//typedef UIHandler::ButtonIdx ButtonIdx; // TODO: fix this recursive include dependency issue!
+	typedef int ButtonIdx;
 
 	UIScreenModeInterfaceBase() {}
 	virtual ~UIScreenModeInterfaceBase() {}
-	virtual void buttonEventsOccurred(unsigned int events, ButtonIdx buttonIdx) = 0;
+	virtual void buttonEventsOccurred(UIButtonEvent event, ButtonIdx buttonIdx) = 0;
 	UIScreenModeInterfaceBase* getNext() {
 		// TODO: implement!
 		return NULL;
 	}
 };
 
-template <typename ButtonEventsArgType>
+template <typename ButtonEventsArgType = void*>
 class UIScreenModeInterface : public UIScreenModeInterfaceBase {
 public:
-	typedef UIHandler::ButtonIdx ButtonIdx;
-	typedef EventsHandler<ButtonEventsArgType> ButtonEventsHandlerType;
+	//typedef UIHandler::ButtonIdx ButtonIdx; // TODO: fix this recursive include dependency issue!
+	typedef int ButtonIdx;
+	typedef EventsHandler<UIButtonEvent, ButtonEventsArgType> ButtonEventsHandlerType;
 	
 private:
-	UIHandler* uiHandler;
+	UIHandler* uiHandler;  // TODO: assign to when registering to it.
 	struct BottonDetails {
 		ButtonIdx buttonIdx;
 		ButtonEventsHandlerType eventsHandler;
 	} buttons[UI_MAX_BUTTONS];
 	
 public:
-	UIScreenModeInterface(UIHandler* uiHandler)
-		: UIScreenModeInterfaceBase(), uiHandler(uiHandler)
+	UIScreenModeInterface()
+		: UIScreenModeInterfaceBase(), uiHandler(NULL)
 	{
 		for (int i = 0; i < UI_MAX_BUTTONS; ++i) {
 			this->buttons[i].buttonIdx = -1; // mark it as free to assign.
@@ -54,11 +59,11 @@ private:
 	
 public:
 
-	virtual void buttonEventsOccurred(unsigned int events, ButtonIdx buttonIdx) override {
+	virtual void buttonEventsOccurred(UIButtonEvent event, ButtonIdx buttonIdx) override {
 		BottonDetails* buttonDetails = this->findBottonDetailsByIdx(buttonIdx);
 		if (!buttonDetails) return;
 		
-		buttonDetails->eventsHandler.triggerEvents(events);
+		buttonDetails->eventsHandler.triggerEvents(event);
 	}
 
 	inline void init() {
@@ -83,7 +88,7 @@ public:
 	
 	template <class CalleeClass>
 	int registerHandler(ButtonIdx buttonIdx,
-						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy, 
+						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ButtonEventsArgType>& proxy, 
 						const ButtonEventsArgType& arg, 
 						unsigned int eventsMask = UI_BUTTON_EVENTS_FULL_MASK) {
 		BottonDetails* buttonDetails = this->findBottonDetailsByIdx(buttonIdx);
@@ -99,34 +104,38 @@ public:
 	}
 	template <class CalleeClass>
 	inline int onClick(ButtonIdx buttonIdx,
-						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy, 
+						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ButtonEventsArgType>& proxy, 
 						const ButtonEventsArgType& arg) {
 		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnClick);
 	}
 	template <class CalleeClass>
 	inline int onDoubleClick(ButtonIdx buttonIdx, 
-						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy,
+						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ButtonEventsArgType>& proxy,
 						const ButtonEventsArgType& arg) {
 		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnDoubleClick);
 	}
 	template <class CalleeClass>
 	inline int onLongPress(ButtonIdx buttonIdx, 
-						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy,
+						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ButtonEventsArgType>& proxy,
 						const ButtonEventsArgType& arg) {
 		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnLongPress);
 	}
 	template <class CalleeClass>
 	inline int onDown(ButtonIdx buttonIdx, 
-						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy,
+						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ButtonEventsArgType>& proxy,
 						const ButtonEventsArgType& arg) {
 		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnDown);
 	}
 	template <class CalleeClass>
 	inline int onUp(ButtonIdx buttonIdx, 
-						const ObjectMethodProxy<CalleeClass, void, unsigned int, ButtonEventsArgType>& proxy,
+						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ButtonEventsArgType>& proxy,
 						const ButtonEventsArgType& arg) {
 		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnUp);
 	}
+	
+	inline UILcdInterface* lcd(); /*{
+		return this->uiHandler->lcd();
+	}*/
 	
 private:
 
@@ -154,12 +163,12 @@ class Mode1 : public UIScreenModeInterface<int> {
 public:
 	Mode1(UIHandler *uiHandler) : UIScreenModeInterface(uiHandler) {}
 	virtual void __init() override {
-		typedef ObjectMethodProxy<Mode1, void, unsigned int, int> ProxyType;
+		typedef ObjectMethodProxy<Mode1, void, UIButtonEvent, int> ProxyType;
 		ProxyType proxy = ProxyType(this, &Mode1::m1);
 		this->registerHandler<Mode1>(1, proxy, 1);
 	}
-	void m1(unsigned int events, int t) {
-		std::cout << "triggered: " << events << " " << t << std::endl;
+	void m1(UIButtonEvent event, int t) {
+		std::cout << "triggered: " << event.events << " " << t << std::endl;
 	}
 };
 

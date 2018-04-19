@@ -3,6 +3,19 @@
 
 #include "../utils/ObjectMethodProxy.h"
 #include "../utils/EventsHandler.h"
+#include "../utils/ShortTimeTimer.h"
+
+/*
+	Instructions for wiring the button:
+	https://www.arduino.cc/en/Tutorial/Button
+*/
+
+// TODO: do we want to send the time pressed as well as the events? consider having event object instead of just `unsigned int events`.
+
+struct UIButtonEvent {
+	unsigned int events;
+	unsigned long millisPressed;
+};
 
 enum UIButtonEventType {
 	Button_OnClick =        (1<<0),
@@ -17,21 +30,26 @@ enum UIButtonEventType {
 template <typename ArgType, size_t MaxEventHandlers = DEFAULT_MAX_EVENT_HANDLERS>
 class UIButton {
 public:
-	typedef EventsHandler<ArgType, MaxEventHandlers> EventsHandlerType;
+	typedef EventsHandler<UIButtonEvent, ArgType, MaxEventHandlers> EventsHandlerType;
+	enum UIButtonState { UP, DOWN };
 	
 private:
 	int pinNumber;
 	EventsHandlerType eventsHandler;
+	UIButtonState lastState;
+	ShortTimeTimer timerSinceGotHigh;
 	
 public:
 	UIButton(int pinNumber)
 		: pinNumber(pinNumber),
-		eventsHandler()
+		eventsHandler(),
+		lastState(UIButtonState::UP),
+		timerSinceGotHigh()
 	{}
 	
 	template <class CalleeClass>
 	inline int registerHandler(
-				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ArgType>& proxy, 
 				const ArgType& arg, 
 				unsigned int eventsMask = UI_BUTTON_EVENTS_FULL_MASK) {
 		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, eventsMask);
@@ -39,58 +57,70 @@ public:
 	
 	template <class CalleeClass>
 	inline int onClick(
-				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ArgType>& proxy, 
 				const ArgType& arg) {
 		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, UIButtonEventType::Button_OnClick);
 	}
 	
 	template <class CalleeClass>
 	inline int onDoubleClick(
-				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ArgType>& proxy, 
 				const ArgType& arg) {
 		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, UIButtonEventType::Button_OnDoubleClick);
 	}
 	
 	template <class CalleeClass>
 	inline int onLongPress(
-				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ArgType>& proxy, 
 				const ArgType& arg) {
 		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, UIButtonEventType::Button_OnLongPress);
 	}
 	
 	template <class CalleeClass>
 	inline int onDown(
-				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ArgType>& proxy, 
 				const ArgType& arg) {
 		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, UIButtonEventType::Button_OnDown);
 	}
 	
 	template <class CalleeClass>
 	inline int onUp(
-				const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+				const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ArgType>& proxy, 
 				const ArgType& arg) {
 		return this->eventsHandler.registerHandler<CalleeClass>(proxy, arg, UIButtonEventType::Button_OnUp);
 	}
 	
 	void init() {
-		// TODO: implement!
+		pinMode(this->pinNumber, INPUT);
 	}
 	
 	void loop() {
+		int buttonState = digitalRead(this->pinNumber);
+		UIButtonEvent event;
+		event.events = 0;
+		event.millisPressed = 0;
+		
+		// TODO: find & set the relevant events occurred.
+		if (buttonState == HIGH && this->lastState == UIButtonState::UP) {
+			this->lastState == UIButtonState::DOWN;
+			event.events |= UIButtonEventType::Button_OnDown;
+		} else if (buttonState == HIGH && this->lastState == UIButtonState::DOWN) {
+			
+		} else if (buttonState == LOW && this->lastState == UIButtonState::UP) {
+			
+		} else if (buttonState == LOW && this->lastState == UIButtonState::DOWN) {
+			
+		} else {
+			assert(0);
+		}
 		
 		// TODO: implement!
 		
-		unsigned int events = 0;
-		
-		// TODO: find & set the relevant events occurred.
-		
-		if (events) {
-			this->eventsHandler.triggerEvents(events);
+		if (event.events) {
+			this->eventsHandler.triggerEvents(event);
 		}
 		
 	}
-	
-	// TODO: implement!
 	
 };
 

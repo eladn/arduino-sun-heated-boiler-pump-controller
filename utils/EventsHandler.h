@@ -1,14 +1,18 @@
 #ifndef EVENTS_HANDLER_H_
 #define EVENTS_HANDLER_H_
 
+#include <assert.h>
+#include "static_assert.h"
+#include "new_operator.h"
+
 #define DEFAULT_MAX_EVENT_HANDLERS 5
 
 
-template<typename ArgType, size_t MaxEventHandlers = DEFAULT_MAX_EVENT_HANDLERS>
+template<typename EventType, typename ArgType, size_t MaxEventHandlers = DEFAULT_MAX_EVENT_HANDLERS>
 class EventsHandler {
 public:
 	class DummyCalleeClass {};
-	typedef ObjectMethodProxy<DummyCalleeClass, void, unsigned int, ArgType> DummyProxyType;
+	typedef ObjectMethodProxy<DummyCalleeClass, void, EventType, ArgType> DummyProxyType;
 	
 private:
 	class EventHandler {
@@ -20,30 +24,31 @@ private:
 	public:
 		EventHandler() : eventsMask(0) {}
 		
-		ObjectMethodProxyBase<void, unsigned int, ArgType>* getProxy() {
-			return (ObjectMethodProxyBase<void, unsigned int, ArgType> *)(&this->proxyBuffer);
+		inline ObjectMethodProxyBase<void, EventType, ArgType>* getProxy() {
+			return (ObjectMethodProxyBase<void, EventType, ArgType> *)(&this->proxyBuffer);
 		}
 		
 		// TODO: doc here! explain why I used this `DummyProxyType` and the `proxyBuffer`.
 		
 		template <class CalleeClass>
-		void setMaskAndProxy(unsigned int eventsMask, const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy) {
+		void setMaskAndProxy(unsigned int eventsMask, const ObjectMethodProxy<CalleeClass, void, EventType, ArgType>& proxy) {
+			if (!eventsMask) return;
 			this->destructProxyIfExists();
-			typedef ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType> ProxyType;
-			assert(sizeof(ProxyType) == sizeof(DummyProxyType)); // TODO: static_assert() it!
+			typedef ObjectMethodProxy<CalleeClass, void, EventType, ArgType> ProxyType;
+			static_assert(sizeof(ProxyType) == sizeof(DummyProxyType), PROXYTYPE_HAVE_WRONG_SIZE);
 			new(&this->proxyBuffer) ProxyType(proxy);
 			this->eventsMask = eventsMask;
 		}
 		
-		void setArg(const ArgType& arg) {
+		inline void setArg(const ArgType& arg) {
 			this->arg = arg;
 		}
 		
-		ArgType& getArg() {
+		inline ArgType& getArg() {
 			return this->arg;
 		}
 		
-		unsigned int getEventsMask() {
+		inline unsigned int getEventsMask() {
 			return this->eventsMask;
 		}
 		
@@ -51,18 +56,18 @@ private:
 			this->destructProxyIfExists();
 		}
 		
-		void triggerEvents(unsigned int events) {
-			if (events & this->eventsMask) {
-				this->getProxy()->call(events, this->arg);
+		inline void triggerEvents(EventType& event) {
+			if (event.events & this->eventsMask) {
+				this->getProxy()->call(event, this->arg);
 			}
 		}
 		
-		bool isSet() {
+		inline bool isSet() {
 			return this->eventsMask;
 		}
 		
 		private:
-		void destructProxyIfExists() {
+		inline void destructProxyIfExists() {
 			if (this->eventsMask) {
 				this->getProxy()->~ObjectMethodProxyBase();
 				this->eventsMask = 0;
@@ -78,7 +83,7 @@ public:
 	};
 	
 	template <class CalleeClass>
-	int registerHandler(const ObjectMethodProxy<CalleeClass, void, unsigned int, ArgType>& proxy, 
+	int registerHandler(const ObjectMethodProxy<CalleeClass, void, EventType, ArgType>& proxy, 
 						ArgType arg, 
 						unsigned int eventsMask) {
 		assert(eventsMask != 0);
@@ -92,9 +97,9 @@ public:
 		return 0;
 	}
 	
-	void triggerEvents(unsigned int events) {
+	void triggerEvents(EventType& event) {
 		for (int i = 0; i < MaxEventHandlers; ++i) {
-			this->handlers[i].triggerEvents(events);
+			this->handlers[i].triggerEvents(event);
 		}
 	}
 	

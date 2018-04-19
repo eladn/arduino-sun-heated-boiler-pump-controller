@@ -5,17 +5,18 @@
 
 #include "UIButton.h"
 #include "UIScreenModeInterface.h"
-
+#include "UILcdInterface.h"
 
 class UIHandler {
 public:
 	typedef int ButtonIdx;
 	typedef UIButton<ButtonIdx, 1> ButtonType;
-	typedef ObjectMethodProxy<UIHandler, void, unsigned int, ButtonIdx> ButtonProxyType;
+	typedef ObjectMethodProxy<UIHandler, void, UIButtonEvent, ButtonIdx> ButtonProxyType;
 	typedef UIButton<void*, 1> ModeButtonType;
-	typedef ObjectMethodProxy<UIHandler, void, unsigned int, void*> ModeButtonProxyType;
+	typedef ObjectMethodProxy<UIHandler, void, UIButtonEvent, void*> ModeButtonProxyType;
 	
 private:
+	UILcdInterface *lcdInterface;
 	ModeButtonType modeButton;
 	
 	// TODO: array of buttons!
@@ -31,11 +32,17 @@ private:
 public:
 	// TODO: implement!
 	
-	UIHandler(int modeButtonPin)
-		: modeButton(modeButtonPin),
+	UIHandler(int modeButtonPin, UILcdInterface *lcdInterface)
+		: lcdInterface(lcdInterface),
+		modeButton(modeButtonPin),
+		buttons(),
 		nrButtons(0)
 	{
 		this->modeButton.onClick(ModeButtonProxyType(this, &UIHandler::switchToNextMode), NULL);
+	}
+	
+	void addScreenMode(UIScreenModeInterfaceBase *screenMode) {
+		// TODO: implement!
 	}
 	
 	// Notice: Must NOT be called after init() has been called!
@@ -46,7 +53,7 @@ public:
 		this->nrButtons++;
 	}
 	
-	void switchToNextMode(unsigned int, void*) {
+	void switchToNextMode(UIButtonEvent, void*) {
 		assert(curScreenMode != NULL);
 		
 		// TODO: implement!
@@ -56,8 +63,8 @@ public:
 		//this->curScreenMode->swichedIn();
 	}
 	
-	void buttonEventsOccurred(unsigned int events, ButtonIdx buttonIdx) {
-		this->curScreenMode->buttonEventsOccurred(events, buttonIdx);
+	void buttonEventsOccurred(UIButtonEvent event, ButtonIdx buttonIdx) {
+		this->curScreenMode->buttonEventsOccurred(event, buttonIdx);
 	}
 	
 	void init() {
@@ -68,6 +75,20 @@ public:
 		}
 		
 		// TODO: init modes!
+	}
+	
+	void loop() {
+		this->modeButton.loop();
+		
+		for (int i = 0; i < this->nrButtons; ++i) {
+			this->buttons[i].button.loop();
+		}
+		
+		// TODO: loop modes!
+	}
+	
+	inline UILcdInterface* lcd() {
+		return this->lcdInterface;
 	}
 	
 };
