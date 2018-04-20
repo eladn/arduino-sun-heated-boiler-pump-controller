@@ -1,6 +1,7 @@
 #ifndef UI_SCREEN_MODE_INTERFACE_H_
 #define UI_SCREEN_MODE_INTERFACE_H_
 
+#include <assert.h>
 #include "UILcdInterface.h"
 
 // TODO: implement!
@@ -10,41 +11,55 @@ class UIHandler;
 class UIScreenModeInterfaceBase {
 protected:
 	UIHandler* uiHandler;  // TODO: assign to when registering to it.
+	UIScreenModeInterfaceBase* nextScreenMode;
 public:
 	//typedef UIHandler::ButtonIdx ButtonIdx; // TODO: fix this recursive include dependency issue!
 	typedef int ButtonIdx;
 
-	UIScreenModeInterfaceBase() : uiHandler(NULL) {}
+	UIScreenModeInterfaceBase() : uiHandler(NULL), nextScreenMode(this) {}
 	virtual ~UIScreenModeInterfaceBase() {}
 	virtual void buttonEventsOccurred(UIButtonEvent event, ButtonIdx buttonIdx) = 0;
 	UIScreenModeInterfaceBase* getNext() {
-		// TODO: implement!
-		return NULL;
+		return this->nextScreenMode;
+	}
+	void assignToUIHandler(UIHandler* uiHandler, UIScreenModeInterfaceBase* afterScreenMode) {
+		assert(this->uiHandler == NULL && this->nextScreenMode != NULL);
+		this->uiHandler = uiHandler;
+		
+		if (afterScreenMode != NULL) {
+			this->nextScreenMode = afterScreenMode->nextScreenMode;
+			afterScreenMode->nextScreenMode = this;
+		}
+		
 	}
 	
 	inline void init() {
-		// TODO: implement!
+		assert(this->uiHandler != NULL && this->nextScreenMode != NULL);
 		this->__init();
 	}
 	
 	inline void loop() {
-		// TODO: implement!
-		this->__loop();
+		assert(this->uiHandler != NULL && this->nextScreenMode != NULL);
+		
+		this->__loop_always();
+		if (this->isTheCurrentChosenScreenMode()) {
+			this->__loop();
+		}
 	}
 	
 	inline void swichedIn() {
-		// TODO: implement!
+		assert(this->uiHandler != NULL && this->nextScreenMode != NULL);
 		this->__swichedIn();
 	}
 	
 	inline void swichedOut() {
-		// TODO: implement!
+		assert(this->uiHandler != NULL && this->nextScreenMode != NULL);
 		this->__swichedOut();
 	}
 	
-	inline UILcdInterface* lcd(); /*{
-		return this->uiHandler->lcd();
-	}*/
+	inline UILcdInterface* lcd();
+	
+	inline bool isTheCurrentChosenScreenMode();
 	
 protected:
 
@@ -52,6 +67,7 @@ protected:
 	
 	virtual void __init() {}
 	virtual void __loop() {}
+	virtual void __loop_always() {}
 	
 	virtual void __swichedIn() {}
 	virtual void __swichedOut() {}

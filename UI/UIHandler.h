@@ -8,6 +8,12 @@
 #include "UIScreenModeInterface.h"
 #include "UILcdInterface.h"
 
+#define FOREACH_SCREENMODE(uiHandler, cur) \
+	for (UIScreenModeInterfaceBase * cur = (uiHandler)->firstScreenMode; \
+			cur != NULL; \
+			cur = ((cur->getNext() != (uiHandler)->firstScreenMode) ? cur->getNext() : NULL))
+
+
 class UIHandler {
 public:
 	typedef int ButtonIdx;
@@ -28,21 +34,28 @@ private:
 	} buttons[UI_MAX_BUTTONS];
 	int nrButtons;
 	
+	UIScreenModeInterfaceBase *firstScreenMode;
 	UIScreenModeInterfaceBase *curScreenMode;
 public:
-	// TODO: implement!
 	
 	UIHandler(int modeButtonPin, UILcdInterface *lcdInterface)
 		: lcdInterface(lcdInterface),
 		modeButton(modeButtonPin),
 		buttons(),
-		nrButtons(0)
+		nrButtons(0),
+		firstScreenMode(NULL),
+		curScreenMode(NULL)
 	{
 		this->modeButton.onClick(ModeButtonProxyType(this, &UIHandler::switchToNextMode));
 	}
 	
-	void addScreenMode(UIScreenModeInterfaceBase *screenMode) {
-		// TODO: implement!
+	void addScreenMode(UIScreenModeInterfaceBase *newScreenMode) {
+		UIScreenModeInterfaceBase *lastScreenMode = this->getLastScreenMode();
+		newScreenMode->assignToUIHandler(this, lastScreenMode);
+		
+		if (this->firstScreenMode == NULL) {
+			this->firstScreenMode = newScreenMode;
+		}
 	}
 	
 	// Notice: Must NOT be called after init() has been called!
@@ -54,13 +67,15 @@ public:
 	}
 	
 	void switchToNextMode(UIButtonEvent) {
-		assert(curScreenMode != NULL);
+		assert(this->curScreenMode != NULL);
+		this->curScreenMode->swichedOut();
+		this->curScreenMode = this->curScreenMode->getNext();
+		assert(this->curScreenMode != NULL);
 		
-		// TODO: implement!
+		// TODO: consider writing the mode name before swiching into it.
+		this->lcd()->clear();
 		
-		//this->curScreenMode->swichedOut();
-		//this->curScreenMode = this->curScreenMode->nextMode;
-		//this->curScreenMode->swichedIn();
+		this->curScreenMode->swichedIn();
 	}
 	
 	void buttonEventsOccurred(UIButtonEvent event, ButtonIdx buttonIdx) {
@@ -74,7 +89,12 @@ public:
 			this->buttons[i].button.init();
 		}
 		
-		// TODO: init modes!
+		FOREACH_SCREENMODE(this, screenMode) {
+			screenMode->init();
+		}
+		
+		this->curScreenMode = this->firstScreenMode;
+		this->curScreenMode->swichedIn();
 	}
 	
 	void loop() {
@@ -84,13 +104,37 @@ public:
 			this->buttons[i].button.loop();
 		}
 		
-		// TODO: loop modes!
+		FOREACH_SCREENMODE(this, screenMode) {
+			screenMode->loop();
+		}
 	}
 	
 	inline UILcdInterface* lcd() {
 		return this->lcdInterface;
 	}
 	
+	inline UIScreenModeInterfaceBase* getCurScreenMode() {
+		return this->curScreenMode;
+	}
+
+private:
+	UIScreenModeInterfaceBase* getLastScreenMode() {
+		FOREACH_SCREENMODE(this, cur) {
+			if (cur->getNext() == this->firstScreenMode) return cur;
+		}
+		return NULL;
+	}
+	
 };
+
+inline UILcdInterface* UIScreenModeInterfaceBase::lcd() {
+	assert(this->uiHandler != NULL && this->nextScreenMode != NULL);
+	return this->uiHandler->lcd();
+}
+
+inline bool UIScreenModeInterfaceBase::isTheCurrentChosenScreenMode() {
+	assert(this->uiHandler != NULL && this->nextScreenMode != NULL);
+	return (this->uiHandler->getCurScreenMode() == this);
+}
 
 #endif /* UI_HANDLER_H_ */
