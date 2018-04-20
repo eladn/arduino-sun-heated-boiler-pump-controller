@@ -170,6 +170,11 @@ public:
 		return this->registerHandler<CalleeClass>(buttonIdx, proxy, UIButtonEventType::Button_OnClick);
 	}
 	template <class CalleeClass>
+	inline int onSingleClick(ButtonIdx buttonIdx, 
+						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent>& proxy) {
+		return this->registerHandler<CalleeClass>(buttonIdx, proxy, UIButtonEventType::Button_OnSingleClick);
+	}
+	template <class CalleeClass>
 	inline int onDoubleClick(ButtonIdx buttonIdx, 
 						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent>& proxy) {
 		return this->registerHandler<CalleeClass>(buttonIdx, proxy, UIButtonEventType::Button_OnDoubleClick);
@@ -178,6 +183,11 @@ public:
 	inline int onLongPress(ButtonIdx buttonIdx, 
 						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent>& proxy) {
 		return this->registerHandler<CalleeClass>(buttonIdx, proxy, UIButtonEventType::Button_OnLongPress);
+	}
+	template <class CalleeClass>
+	inline int onShortPress(ButtonIdx buttonIdx, 
+						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent>& proxy) {
+		return this->registerHandler<CalleeClass>(buttonIdx, proxy, UIButtonEventType::Button_OnShortPress);
 	}
 	template <class CalleeClass>
 	inline int onDown(ButtonIdx buttonIdx, 
@@ -223,6 +233,12 @@ public:
 		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnClick);
 	}
 	template <class CalleeClass>
+	inline int onSingleClick(ButtonIdx buttonIdx, 
+						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ButtonEventsArgType>& proxy,
+						const ButtonEventsArgType& arg) {
+		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnSingleClick);
+	}
+	template <class CalleeClass>
 	inline int onDoubleClick(ButtonIdx buttonIdx, 
 						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ButtonEventsArgType>& proxy,
 						const ButtonEventsArgType& arg) {
@@ -233,6 +249,12 @@ public:
 						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ButtonEventsArgType>& proxy,
 						const ButtonEventsArgType& arg) {
 		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnLongPress);
+	}
+	template <class CalleeClass>
+	inline int onShortPress(ButtonIdx buttonIdx, 
+						const ObjectMethodProxy<CalleeClass, void, UIButtonEvent, ButtonEventsArgType>& proxy,
+						const ButtonEventsArgType& arg) {
+		return this->registerHandler<CalleeClass>(buttonIdx, proxy, arg, UIButtonEventType::Button_OnShortPress);
 	}
 	template <class CalleeClass>
 	inline int onDown(ButtonIdx buttonIdx, 
