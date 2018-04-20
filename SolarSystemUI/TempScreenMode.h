@@ -14,7 +14,9 @@ public:
 		solarSystem(solarSystem)
 	{}
 	
-	// TODO: implement!
+	virtual void __loop() override {
+		this->solarSystem->printStatusToLCD(this->lcd());
+	}
 	
 };
 

@@ -61,26 +61,30 @@ public:
   // to support any kind of lcd that has `setCursor` and `print` methods.
   template <typename LCD_TYPE>
   void printStatusToLCD(LCD_TYPE& lcd) {
+	  this->printStatusToLCD(&lcd);
+  }
+  template <typename LCD_TYPE>
+  void printStatusToLCD(LCD_TYPE* lcd) {
     // first line.
-    lcd.setCursor(0,0);
-    if (this->solarPanelSampler.isErrorOccurred()) lcd.print("*"); else lcd.print(" "); // error indicator
-    lcd.print("Panel ");
-    lcd.print(this->solarPanelSampler.getTemperature(), 1); // 4-5 chars
-    lcd.print(" ");
+    lcd->setCursor(0,0);
+    if (this->solarPanelSampler.isErrorOccurred()) lcd->print("*"); else lcd->print(" "); // error indicator
+    lcd->print("Panel ");
+    lcd->print(this->solarPanelSampler.getTemperature(), 1); // 4-5 chars
+    lcd->print(" ");
     
     // second line.
-    lcd.setCursor(0,1);
-    if (this->hotWaterTankSampler.isErrorOccurred()) lcd.print("*"); else lcd.print(" "); // error indicator
-    lcd.print("Tank  ");
-    lcd.print(this->hotWaterTankSampler.getTemperature(), 1); // 4-5 chars
-    lcd.print(" ");
+    lcd->setCursor(0,1);
+    if (this->hotWaterTankSampler.isErrorOccurred()) lcd->print("*"); else lcd->print(" "); // error indicator
+    lcd->print("Tank  ");
+    lcd->print(this->hotWaterTankSampler.getTemperature(), 1); // 4-5 chars
+    lcd->print(" ");
     
     // print whether the pump is currently turned-on, on the top-right corner.
-    lcd.setCursor(13,0);
+    lcd->setCursor(13,0);
     if (this->pump.isOn()) {
-      lcd.print("ON");
+      lcd->print("ON");
     } else {
-      lcd.print("  ");
+      lcd->print("  ");
     }
   }
 

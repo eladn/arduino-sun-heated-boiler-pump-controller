@@ -50,8 +50,9 @@ void loop() {
   solarSystem.loop();
   solarSystemUI.loop();
   
-  // TODO: remove lcd print! should be part of the `solarSystemUI`.
-  solarSystem.printStatusToLCD(lcd);
+  // Simple printing without the `SolarSystemUI`:
+  // solarSystem.printStatusToLCD(lcd);
+  
   #if DEBUG_PRINT_TEMP_TO_SERIAL
   solarSystem.printStatusToSerial();
   #endif /* DEBUG_PRINT_TEMP_TO_SERIAL */
