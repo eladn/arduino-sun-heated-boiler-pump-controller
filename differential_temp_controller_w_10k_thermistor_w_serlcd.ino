@@ -14,9 +14,13 @@
 // set the LCD address to 0x27 for a 16 chars and 2 line display
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-const int PANELSENSOR_PIN = A1;
-const int TANKSENSOR_PIN = A0;
-const int PUMP_RELAY_PIN = 10;
+#define PANELSENSOR_PIN A1
+#define TANKSENSOR_PIN A0
+#define PUMP_RELAY_PIN 10
+#define MODE_BUTTON_PIN 1 /* TODO: change! */
+#define UPPER_BUTTON_PIN 2 /* TODO: change! */
+#define LOWER_BUTTON_PIN 3 /* TODO: change! */ 
+#define SET_BUTTON_PIN 4  /* TODO: change! */
 
 #define DELAY_MS_BETWEEN_SAMPLING 250
 
@@ -29,7 +33,8 @@ const int PUMP_RELAY_PIN = 10;
 
 SolarSystem solarSystem(PANELSENSOR_PIN, TANKSENSOR_PIN, PUMP_RELAY_PIN);
 UILcdInterfaceImpl<LiquidCrystal_I2C> lcdInterface(&lcd);
-SolarSystemUI solarSystemUI(&solarSystem, &lcdInterface);
+SolarSystemUI solarSystemUI(&solarSystem, &lcdInterface, MODE_BUTTON_PIN, 
+							UPPER_BUTTON_PIN, LOWER_BUTTON_PIN, SET_BUTTON_PIN);
 
 
 /* Main Arduino setup() method */
