@@ -29,7 +29,7 @@ public:
     for (int i = 0; i < SENSOR_READINGS_ARRAY_SIZE; ++i) {
       solarPanelSampler.sample();
       hotWaterTankSampler.sample();
-      delay(DELAY_MS_BETWEEN_SAMPLING);
+      delay(MAIN_LOOP_DELAY_MS);
     }
   }
   

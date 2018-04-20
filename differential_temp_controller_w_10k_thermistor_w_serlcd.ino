@@ -11,30 +11,20 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
+#include "SolarSystemSettings.h"
+
 // set the LCD address to 0x27 for a 16 chars and 2 line display
-LiquidCrystal_I2C lcd(0x27, 16, 2);
-
-#define PANELSENSOR_PIN A1
-#define TANKSENSOR_PIN A0
-#define PUMP_RELAY_PIN 10
-#define MODE_BUTTON_PIN 1 /* TODO: change! */
-#define UPPER_BUTTON_PIN 2 /* TODO: change! */
-#define LOWER_BUTTON_PIN 3 /* TODO: change! */ 
-#define SET_BUTTON_PIN 4  /* TODO: change! */
-
-#define DELAY_MS_BETWEEN_SAMPLING 250
-
-/* whether to constantly print temperatures to serial (for debugging) */
-#define DEBUG_PRINT_TEMP_TO_SERIAL 0
+LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COLS, LCD_ROWS);
 
 #include "SolarSystem/SolarSystem.h"
+SolarSystem solarSystem(PANEL_SENSOR_PIN, TANK_SENSOR_PIN, PUMP_RELAY_PIN);
+
+#if USE_SOLAR_SYSTEM_UI
 #include "SolarSystemUI/SolarSystemUI.h"
-
-
-SolarSystem solarSystem(PANELSENSOR_PIN, TANKSENSOR_PIN, PUMP_RELAY_PIN);
 UILcdInterfaceImpl<LiquidCrystal_I2C> lcdInterface(&lcd);
 SolarSystemUI solarSystemUI(&solarSystem, &lcdInterface, MODE_BUTTON_PIN, 
 							UPPER_BUTTON_PIN, LOWER_BUTTON_PIN, SET_BUTTON_PIN);
+#endif /* USE_SOLAR_SYSTEM_UI */
 
 
 /* Main Arduino setup() method */
@@ -47,20 +37,26 @@ void setup() {
   lcd.backlight();  // open the back-light
   
   solarSystem.init();
+  
+  #if USE_SOLAR_SYSTEM_UI
   solarSystemUI.init();
+  #endif /* USE_SOLAR_SYSTEM_UI */
 }
 
 /* Main Arduino loop() method */
 void loop() {
   solarSystem.loop();
-  solarSystemUI.loop();
   
+  #if USE_SOLAR_SYSTEM_UI
+  solarSystemUI.loop();
+  #else
   // Simple printing without the `SolarSystemUI`:
-  // solarSystem.printStatusToLCD(lcd);
+  solarSystem.printStatusToLCD(lcd);
+  #endif /* USE_SOLAR_SYSTEM_UI */
   
   #if DEBUG_PRINT_TEMP_TO_SERIAL
   solarSystem.printStatusToSerial();
   #endif /* DEBUG_PRINT_TEMP_TO_SERIAL */
   
-  delay(DELAY_MS_BETWEEN_SAMPLING);
+  delay(MAIN_LOOP_DELAY_MS);
 }
