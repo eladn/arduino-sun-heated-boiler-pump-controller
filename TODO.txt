@@ -1,0 +1,31 @@
+TODO:
+* Add license and license-and-copyrights-header to files.
+* `UIButton`: Add SingleClick event.
+	Click event is called on every click. Particularly, if a double-click has been occurred,
+		`Click` event would be called twice.
+	SingleClick is called only when a click occurred but DoubleClick is not called
+		(so it is a bit delayed after the click to ensure no double-click occurred).
+? Consider using X-Macros for the event types in order to impelement all the events handler registration methods.
+* Complete `UIButton` implementation (maybe without DoubleClick).
+* Complete `ShortTimeTimer` implementation.
+* Refactor sensors inheritance design:
+	StabledSensorSampler --[parent of]--> TemperatureSensorSampler (having TemperatureSensorErrorDetector)
+	Pass an instance of `Thermistor10KSensor` as a value to the c'tor of `StabledSensorSampler`.
+	The `StabledSensorSampler` would be a template class. It would store an instance of `typename SensorType`.
+	Now the `Thermistor10KSensor` would store its own pin number. The `StabledSensorSampler` wouldn't store pin anymore.
+	`Thermistor10KSensor` should implement a `int read()`, `void init()` and `void loop()` methods. `StabledSensorSampler` would call these.
+	`StabledSensorSampler` has `void init()` and `void loop()` methods.
+	`StabledSensorSampler` defines a `STABLED_SENSOR_SAMPLER_SAMPLE_RATE` constant that decides how often to sample within `loop()` calls.
+* Implement `SolarSystemLogger` and add an instance as a member of `SensorSystem`.
+	`SensorSystem` is responsible to activly inform the log with events and current status.
+	The logger is responsible to manage the last stored relevant events and statistics.
+* Implement the log screen.
+	It should contain a vertical list of rows of the following format:
+	<circular-printed-log-item-description>: <value>
+	<circular-printed-log-item-description>: <value>
+* Add setDiff() and storeDiffConfToEEPROM() and loadDiffConfFromEEPROM methods to `SensorSystem`.
+? Consider making `EEPROMConfiguration` class in utils.
+* Implement the temp-setter screen.
+* Implement screen-circular-printer inside UILcdInterface.
+	printCircular(char* text, maxWidth, bool wrap)
+? `UIHandler`: Consider printing the screen-mode-name for a second when switching between modes.
