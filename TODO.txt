@@ -29,3 +29,4 @@ TODO:
 * Implement screen-circular-printer inside UILcdInterface.
 	printCircular(char* text, maxWidth, bool wrap)
 ? `UIHandler`: Consider printing the screen-mode-name for a second when switching between modes.
+* Check where can we replace a class member with constexpr, so it would cost application memory rather than runtime memory.
